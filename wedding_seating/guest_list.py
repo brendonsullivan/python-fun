@@ -6,15 +6,8 @@ class GuestList:
 
     def __init__(self):
         """Init an empty guestlist."""
-        self.guests = set()
+        self.guests = []
         self.relations = dict()
-        self.relation_types = {
-            'acquaintance': 1,
-            'friend': 2,
-            'close friend': 3,
-            'family': 4,
-            'spouse': 5,
-        }
 
     def __str__(self):
         """Return string of guests and relations."""
@@ -24,16 +17,41 @@ class GuestList:
             c=type
         ) for relation, type in self.relations.items())
 
-    def add_relation(self, guest1: str, guest2: str, type: str):
-        """Add one relation between pair of guests.
-        Guests must both exist already.
-        """
-        if not (guest1 in self.guests and guest2 in self.guests):
-            raise ValueError('Guest not found. Add guest first')
+    def __len__(self):
+        """Return number of guests."""
+        return len(self.guests)
 
-        relation = (min(guest1, guest2), max(guest1, guest2))
-        self.relations[relation] = self.relation_types[type]
+    def __contains__(self, guest):
+        """See if guest is in guest list."""
+        return guest in self.guests
+
+    def __getitem__(self, key):
+        """Return guest # key."""
+        return self.guests[key]
+
+    def __iter__(self):
+        """Iterate over guests."""
+        return self.guests.__iter__()
 
     def add_guest(self, guest: str):
         """Add a guest."""
-        self.guests.add(guest)
+        if guest not in self.guests:
+            self.guests += [guest]
+
+    def add_relation(self, guest1: str, guest2: str, relation: int):
+        """Add one relation between pair of guests.
+
+        Guests must both exist already.
+        """
+        if not (guest1 in self and guest2 in self):
+            raise ValueError('Guest not found. Add guest first')
+
+        edge = (min(guest1, guest2), max(guest1, guest2))
+        self.relations[edge] = relation
+
+    def get_relation(self, guest1: str, guest2: str):
+        """Return relation for pair of users."""
+        if not (guest1 in self and guest2 in self):
+            raise ValueError('Guest not found. Add guest first')
+        edge = (min(guest1, guest2), max(guest1, guest2))
+        return self.relations[edge]
