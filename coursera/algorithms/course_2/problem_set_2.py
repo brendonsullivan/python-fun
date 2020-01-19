@@ -1,139 +1,71 @@
 """
 Problem set 2 of coursera algo2 pset.
-
-Has class for doing min heap
-Imports vertex and graph classes from problem set 1
+Calculate distance from node 1 to the following nodes
+7,37,59,82,99,115,133,165,188,197
+return csv of distances
 """
-from problem_set_1 import Graph, Vertex, load_file
 
 
-class minHeap:
-    """Implements min heap data structure.
+class Dijkstra:
 
-    Use min_value() to get the lowest value
-    Use extract_min_key() to pop the key with the min value
-    """
+    def __init__(self, weighted_adj_list):
+        self.weighted_adj_list = weighted_adj_list
 
-    def __init__(self, items):
-        """Initialize heap from key value map of items."""
-        self.values = items
-        self.heap = [item for item in items.keys()]
-        self.item_ids = {}
-        self._build_heap()
+    def shortestPaths(self, source):
+        "Calculate shortest paths to all nodes given source node"
+        shortest_distances = {source: 0}
+        for node in self.weighted_adj_list.keys():
+            if node != source:
+                shortest_distances[node] = None
+        crossing_paths = self.weighted_adj_list[source]
+        while(crossing_paths):
+            # first finding closest node
+            min_path = None
+            closest_node = None
+            for node, dist in crossing_paths.items():
+                if min_path is None or dist < min_path:
+                    min_path = dist
+                    closest_node = node
+            # adding closest node to explored and shortest distances
+            # removing node from crossing paths
+            # updating crossing paths and distances
+            shortest_distances[closest_node] = min_path
+            del crossing_paths[closest_node]
+            for node, dist in self.weighted_adj_list[closest_node].items():
+                if shortest_distances[node] is None:
+                    new_dist = dist + min_path
+                    curr_dist = crossing_paths.get(node, new_dist)
+                    crossing_paths[node] = min(curr_dist, new_dist)
 
-    def _left_child_id(self, id):
-        left_id = id * 2 + 1
-        if left_id >= len(self.heap):
-            left_id = None
-        return left_id
+        return shortest_distances
 
-    def _right_child_id(self, id):
-        right_id = id * 2 + 2
-        if right_id >= len(self.heap):
-            right_id = None
-        return right_id
 
-    def _parent_id(self, id):
-        parent = int((id - 1) / 2)
-        if id == 0:
-            parent = None
-        return parent
+test_graph = {
+    1: {2: 3, 3: 2, },
+    2: {1: 3, 3: 2, 4: 3, },
+    3: {1: 2, 4: 1, },
+    4: {2: 3, 3: 1, }
+}
 
-    def _swap_items(self, id1, id2):
-        temp = self.heap[id1]
-        self.heap[id1] = self.heap[id2]
-        self.heap[id2] = temp
 
-        # updating reverse index
-        self.item_ids[self.heap[id1]] = id1
-        self.item_ids[self.heap[id2]] = id2
+def main():
+    weighted_adj_list = {}
+    with open(
+        "/Users/brendonsullivan/Documents/docs/coursera_hw/djkstra.txt",
+        'r'
+    ) as f:
+        for line in f:
+            row = line.split('\t')
+            head = int(row[0])
+            weighted_adj_list[head] = {}
+            for i in range(1, len(row)-1):
+                node, distance = row[i].split(',')
+                weighted_adj_list[head][int(node)] = int(distance)
+    paths = Dijkstra(weighted_adj_list).shortestPaths(1)
+    nodes = [7, 37, 59, 82, 99, 115, 133, 165, 188, 197]
+    filter_dist = [str(paths[i]) for i in nodes]
+    print(','.join(filter_dist))
 
-    def _heapify(self, id):
-        smallestid = id
-        smallest_val = self.values[self.heap[id]]
-        leftid = self._left_child_id(id)
-        rightid = self._right_child_id(id)
 
-        if leftid is not None:
-            left_val = self.values[self.heap[leftid]]
-            if left_val < smallest_val:
-                smallestid = leftid
-                smallest_val = left_val
-
-        if rightid is not None:
-            right_val = self.values[self.heap[rightid]]
-            if right_val < smallest_val:
-                smallestid = rightid
-                smallest_val = right_val
-
-        if smallestid == id:
-            return
-        else:
-            self._swap_items(id, smallestid)
-            self._heapify(smallestid)
-
-    def _build_heap(self):
-        heap_size = len(self.heap)
-        for offset in range(0, int(heap_size/2)+1):
-            current_id = int(heap_size / 2) - offset
-            self._heapify(current_id)
-
-        # creating reverse index
-        for id in range(len(self.heap)):
-            key = self.heap[id]
-            self.item_ids[key] = id
-
-    def _bubble_up(self, id, value):
-        while(True):
-            parent_id = self._parent_id(id)
-            if parent_id is None:
-                break
-            elif self.values[self.heap[parent_id]] < value:
-                break
-            else:
-                self._swap_items(id, parent_id)
-                id = parent_id
-
-    def min_value(self):
-        """Get the minimum value."""
-        return self.values[self.heap[0]]
-
-    def extract_min_key(self):
-        """Pop the key with the minimal value from the heap.
-
-        Returns key, value
-        """
-        assert len(self.heap) > 0, "No items in the heap"
-        right_most_leaf = len(self.heap) - 1
-        self._swap_items(right_most_leaf, 0)
-        min_key = self.heap.pop()
-        min_val = self.values.pop(min_key)
-        if len(self.heap) > 0:
-            self._heapify(0)
-
-        return min_key, min_val
-
-    def update_value(self, key, new_val):
-        """Update value for given key."""
-        self.values[key] = new_val
-        self._build_heap()
-
-    def decrease_value(self, key, new_val):
-        """Update a current value with a lower value."""
-        assert self.values[key] > new_val, "new value is not lower"
-        self.values[key] = new_val
-
-        key_id = self.item_ids[key]
-        self._bubble_up(key_id, new_val)
-
-    def insert(self, key, value):
-        """Add a new key + value to the heap."""
-        self.values[key] = value
-        self.heap.append(key)
-        self.item_ids[key] = len(self.heap) - 1
-
-        key_id = len(self.heap) - 1
-        self._bubble_up(key_id, value)
-
-class Dijkstra(Graph):
-    
+if __name__ == "__main__":
+    main()
