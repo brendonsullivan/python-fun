@@ -4,7 +4,7 @@ Problem set 2 of coursera algo2 pset.
 Has class for doing min heap
 Imports vertex and graph classes from problem set 1
 """
-from problem_set_1 import Graph, Vertex
+from problem_set_1 import Graph, Vertex, load_file
 
 
 class minHeap:
@@ -136,4 +136,4 @@ class minHeap:
         self._bubble_up(key_id, value)
 
 class Dijkstra(Graph):
-    pass
+    
